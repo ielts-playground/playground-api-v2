@@ -1,0 +1,8 @@
+services:
+  pb:
+    build: ..
+    image: pb:0.19.4
+    container_name: pb
+    ports:
+      - 8090:8090
+
