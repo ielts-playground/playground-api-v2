@@ -3,9 +3,10 @@
   "version": "0.19.4",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\"",
-    "build": "bun build --format esm src/* --outdir pb_data/pb_hooks",
-    "dev": "bun run build && pocketbase serve --dir=pb_data --hooksDir=pb_data/pb_hooks",
-    "clean": "rm -rf pb_data"
+    "build": "rm -rf pb_data/pb_hooks && bun build --format esm src/* --outdir pb_data/pb_hooks",
+    "start": "pocketbase serve --dir=pb_data --hooksDir=pb_data/pb_hooks --migrationsDir=pb_migrations",
+    "dev": "bun run build && bun run start",
+    "reset": "rm -rf pb_data"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
