@@ -11,6 +11,7 @@ RUN bun install --frozen-lockfile --production
 COPY pb_migrations pb_migrations
 COPY src src
 RUN bun build --minify --format esm src/* --outdir pb_hooks
+COPY views pb_hooks/views
 
 FROM alpine:3 AS run
 WORKDIR /pb

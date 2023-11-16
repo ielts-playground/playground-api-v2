@@ -3,7 +3,9 @@
   "version": "0.19.4",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\"",
-    "build": "rm -rf pb_data/pb_hooks && bun build --format esm src/* --outdir pb_data/pb_hooks",
+    "clean": "rm -rf pb_data/pb_hooks",
+    "build": "bun run clean && bun build --format esm src/* --outdir pb_data/pb_hooks",
+    "postbuild": "rm -rf pb_data/pb_hooks/views && cp -r views pb_data/pb_hooks/views",
     "start": "pocketbase serve --dir=pb_data --hooksDir=pb_data/pb_hooks --migrationsDir=pb_migrations",
     "dev": "bun run build && bun run start",
     "reset": "rm -rf pb_data"
