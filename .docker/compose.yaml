@@ -1,8 +1,31 @@
 services:
-  pb:
+  api:
     build: ..
-    image: pb:0.19.4
-    container_name: pb
+    image: ielts-playground-api-v2:0.19.4
+    container_name: ielts-playground-api-v2
     ports:
       - 8090:8090
+    environment:
+      - EXPORTER_SERVICE=http://exporter:8080
+    volumes:
+      - $PB_DATA:/pb
+    networks:
+      - ielts-playground-v2
+  exporter:
+    build:
+      context: ..
+      dockerfile: services/exporter/Dockerfile
+    image: ielts-playground-api-v2-exporter:1
+    container_name: ielts-playground-api-v2-exporter
+    volumes:
+      - $PB_DATA:/pb/pb_data
+    expose:
+      - 8080
+    networks:
+      - ielts-playground-v2
+
+networks:
+  ielts-playground-v2:
+    name: ielts-playground-v2
+    driver: bridge
 

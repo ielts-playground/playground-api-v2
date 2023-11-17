@@ -7,7 +7,7 @@ RUN wget https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSIO
 FROM oven/bun:1 AS build
 WORKDIR /pb
 COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile --production
+RUN bun install
 COPY pb_migrations pb_migrations
 COPY src src
 RUN bun build --minify --format esm src/* --outdir pb_hooks

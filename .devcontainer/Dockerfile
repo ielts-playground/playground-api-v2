@@ -8,5 +8,5 @@ RUN wget https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSIO
 FROM oven/bun:1
 COPY --from=base /usr/local/bin/pocketbase /usr/local/bin/pocketbase
 RUN apt update && \
-    apt install git -y && \
+    apt install git sqlite3 -y && \
     apt clean
