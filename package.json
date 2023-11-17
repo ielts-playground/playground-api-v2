@@ -3,12 +3,13 @@
   "version": "0.19.4",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\" \"services/**/*.ts\"",
-    "clean": "rm -rf pb_data/pb_hooks",
-    "build": "bun run clean && bun build --format esm src/* --outdir pb_data/pb_hooks",
-    "postbuild": "rm -rf pb_data/pb_hooks/views && cp -r views pb_data/pb_hooks/views",
+    "clean": "rm -rf pb_data/pb_hooks && rm -rf pb_public && rm -rf pb_data/pb_hooks/views",
+    "prebuild": "bun run clean",
+    "build": "bun build --format esm src/* --outdir pb_data/pb_hooks",
+    "postbuild": "cp -r public pb_public && cp -r views pb_data/pb_hooks/views",
     "start": "pocketbase serve --dir=pb_data --hooksDir=pb_data/pb_hooks --migrationsDir=pb_migrations",
     "dev": "bun run build && bun run start",
-    "reset": "rm -rf pb_data"
+    "reset": "rm -rf pb_data && rm -rf pb_public"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",

@@ -64,6 +64,9 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
         return c.json(201, {
             code: 'succeeded',
             message: 'Registered successfully.',
+            data: {
+                email: form.email,
+            },
         });
     } finally {
         if (form.email) {
@@ -101,10 +104,15 @@ routerAdd(
             if (expiration < now) throw new Error();
             user = $app.dao().findAuthRecordByEmail('users', email);
             user.setVerified(true);
+            user.set('activated', true);
             $app.dao().saveRecord(user);
             return c.json(200, {
                 code: 'succeeded',
                 message: 'Verified successfully.',
+                data: {
+                    user,
+                    token: $tokens.recordAuthToken($app, user),
+                },
             });
         } catch {
             return c.json(400, {
@@ -136,6 +144,32 @@ routerAdd(
                 attachments: {},
             });
         }
+    },
+    $apis.activityLogger($app),
+);
+
+routerAdd(
+    'POST',
+    '/api/v2/users/authenticate',
+    (c) => {
+        try {
+            const { email, password } = $apis.requestInfo(c).data;
+            const user = $app.dao().findAuthRecordByEmail('users', email);
+            if (user.validatePassword(password)) {
+                return c.json(200, {
+                    code: 'succeeded',
+                    message: 'Authenticated successfully.',
+                    data: {
+                        user,
+                        token: $tokens.recordAuthToken($app, user),
+                    },
+                });
+            }
+        } catch {}
+        return c.json(401, {
+            code: 'authentication_failed',
+            message: 'Email or Password incorrect.',
+        });
     },
     $apis.activityLogger($app),
 );

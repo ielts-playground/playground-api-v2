@@ -9,6 +9,7 @@ WORKDIR /pb
 COPY package.json bun.lockb ./
 RUN bun install
 COPY pb_migrations pb_migrations
+COPY public pb_public
 COPY src src
 RUN bun build --minify --format esm src/* --outdir pb_hooks
 COPY views pb_hooks/views
@@ -18,5 +19,6 @@ WORKDIR /pb
 COPY --from=base /pocketbase /usr/local/bin/pocketbase
 COPY --from=build /pb/node_modules node_modules
 COPY --from=build /pb/pb_migrations pb_migrations
+COPY --from=build /pb/pb_public pb_public
 COPY --from=build /pb/pb_hooks pb_hooks
 ENTRYPOINT pocketbase serve --http=:8090 --dir=. --hooksDir=./pb_hooks --migrationsDir=./pb_migrations
