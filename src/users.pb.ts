@@ -1,6 +1,6 @@
 /// <reference path="../types/pocketbase.d.ts" />
 
-routerAdd('POST', '/api/v2/users/request-verification', (c) => {
+routerAdd('POST', '/api/v2/users/request-verify-email', (c) => {
     const { email } = $apis.requestInfo(c).data;
     try {
         const user = $app.dao().findAuthRecordByEmail('users', email);
@@ -63,7 +63,7 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
         if (form.email) {
             $http.send({
                 method: 'POST',
-                url: 'http://localhost:8090/api/v2/users/request-verification', // internal call
+                url: 'http://localhost:8090/api/v2/users/request-verify-email', // internal call
                 body: JSON.stringify({
                     email: form.email,
                 }),
@@ -74,7 +74,7 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
 
 routerAdd(
     'POST',
-    '/api/v2/users/verify',
+    '/api/v2/users/verify-email',
     (c) => {
         const { email, code } = $apis.requestInfo(c).data;
         let verified = false;
