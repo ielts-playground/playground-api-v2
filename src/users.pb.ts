@@ -1,65 +1,56 @@
 /// <reference path="../types/pocketbase.d.ts" />
 
-routerAdd(
-    'POST',
-    '/api/v2/users/send-verification-mail',
-    (c) => {
-        const { email: userEmail } = $apis.requestInfo(c).data;
-        const verification = new Record();
-        $app.dao()
-            .recordQuery('codes')
-            .select('code')
-            .where(
-                $dbx.hashExp({
-                    email: userEmail,
-                    type: 'VERIFY_EMAIL',
-                }),
-            )
-            .orderBy('created DESC')
-            .one(verification);
-        const senderAddress = $app.settings().meta.senderAddress;
-        const senderName = $app.settings().meta.senderName;
-        const subject = `Verify your email`;
-        const html = $template
-            .loadFiles(`${__hooks}/views/verify-email.html`)
-            .render({
-                code: verification.get('code'),
+routerAdd('POST', '/api/v2/users/request-verification', (c) => {
+    const { email } = $apis.requestInfo(c).data;
+    try {
+        const user = $app.dao().findAuthRecordByEmail('users', email);
+        if (user.verified()) {
+            return c.json(400, {
+                code: 'email_already_verified',
+                message: 'Email has been already verified.',
             });
-        const address = (email: string, name: string = '') => ({
-            address: email,
-            name,
-            string: () => email,
+        }
+        const code = $security.randomStringWithAlphabet(6, '0123456789');
+        $app.dao().saveRecord(
+            new Record($app.dao().findCollectionByNameOrId('codes'), {
+                email: email,
+                code,
+                type: 'VERIFY_EMAIL',
+            }),
+        );
+        $http.send({
+            method: 'POST',
+            url: 'http://localhost:8090/api/v2/mail/send', // internal call
+            body: JSON.stringify({
+                email: email,
+                subject: 'Verify your email',
+                template: 'verify-email',
+                data: {
+                    code,
+                },
+            }),
         });
-        $app.newMailClient().send({
-            from: address(senderAddress, senderName),
-            to: [address(userEmail)],
-            subject,
-            html,
-            bcc: [],
-            cc: [],
-            text: '',
-            headers: {},
-            attachments: {},
+        return c.json(200, {
+            code: 'succeeded',
+            message: 'Verification mail has been sent successfully.',
         });
-        return c.json(200, {});
-    },
-    $apis.activityLogger($app),
-);
+    } catch {
+        return c.json(400, {
+            code: 'verification_request_failed',
+            message: 'Verification request could not be processed.',
+        });
+    }
+});
 
 routerAdd('POST', '/api/v2/users/register', (c) => {
     const data = $apis.requestInfo(c).data;
     const user = new Record($app.dao().findCollectionByNameOrId('users'));
     const form = new RecordUpsertForm($app, user);
-    form.loadData(data);
+    form.loadData({
+        ...data,
+        activated: data['subscription'] === 'FREE',
+    });
     form.submit();
-    const code = $security.randomStringWithAlphabet(6, '0123456789');
-    $app.dao().saveRecord(
-        new Record($app.dao().findCollectionByNameOrId('codes'), {
-            email: form.email,
-            code,
-            type: 'VERIFY_EMAIL',
-        }),
-    );
     try {
         return c.json(201, {
             code: 'succeeded',
@@ -72,7 +63,7 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
         if (form.email) {
             $http.send({
                 method: 'POST',
-                url: 'http://localhost:8090/api/v2/users/send-verification-mail', // internal call
+                url: 'http://localhost:8090/api/v2/users/request-verification', // internal call
                 body: JSON.stringify({
                     email: form.email,
                 }),
@@ -86,8 +77,15 @@ routerAdd(
     '/api/v2/users/verify',
     (c) => {
         const { email, code } = $apis.requestInfo(c).data;
-        let user: models.Record | undefined = undefined;
+        let verified = false;
         try {
+            const user = $app.dao().findAuthRecordByEmail('users', email);
+            if (user.verified()) {
+                return c.json(400, {
+                    code: 'email_already_verified',
+                    message: 'Email has been already verified.',
+                });
+            }
             const record = new Record();
             $app.dao()
                 .recordQuery('codes')
@@ -95,6 +93,7 @@ routerAdd(
                     $dbx.hashExp({
                         email,
                         code,
+                        type: 'VERIFY_EMAIL',
                     }),
                 )
                 .orderBy('created DESC')
@@ -102,10 +101,9 @@ routerAdd(
             const expiration = record.created.time().unix() + 5 * 60; // after 5 minutes
             const now = new DateTime().time().unix();
             if (expiration < now) throw new Error();
-            user = $app.dao().findAuthRecordByEmail('users', email);
             user.setVerified(true);
-            user.set('activated', true);
             $app.dao().saveRecord(user);
+            verified = true;
             return c.json(200, {
                 code: 'succeeded',
                 message: 'Verified successfully.',
@@ -117,32 +115,20 @@ routerAdd(
         } catch {
             return c.json(400, {
                 code: 'verification_failed',
-                message: 'Email incorrect or Code expired.',
+                message: 'Provided email or code is invalid.',
             });
         } finally {
-            if (!user) return;
-            const senderAddress = $app.settings().meta.senderAddress;
-            const senderName = $app.settings().meta.senderName;
-            const subject = `Your email has been verified`;
-            const html = $template
-                .loadFiles(`${__hooks}/views/verify-email-successfully.html`)
-                .render({});
-            const address = (email: string, name: string = '') => ({
-                address: email,
-                name,
-                string: () => email,
-            });
-            $app.newMailClient().send({
-                from: address(senderAddress, senderName),
-                to: [address(email)],
-                subject,
-                html,
-                bcc: [],
-                cc: [],
-                text: '',
-                headers: {},
-                attachments: {},
-            });
+            if (verified) {
+                $http.send({
+                    method: 'POST',
+                    url: 'http://localhost:8090/api/v2/mail/send', // internal call
+                    body: JSON.stringify({
+                        email,
+                        template: 'verify-email-successfully',
+                        subject: 'Your have verified your email',
+                    }),
+                });
+            }
         }
     },
     $apis.activityLogger($app),
@@ -168,7 +154,7 @@ routerAdd(
         } catch {}
         return c.json(401, {
             code: 'authentication_failed',
-            message: 'Email or Password incorrect.',
+            message: 'Provided email or password is incorrect.',
         });
     },
     $apis.activityLogger($app),
