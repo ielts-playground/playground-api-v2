@@ -1,7 +1,9 @@
 /// <reference path="../types/pocketbase.d.ts" />
 
 routerAdd('POST', '/api/v2/users/request-verify-email', (c) => {
-    const { email } = $apis.requestInfo(c).data;
+    const { email } = $apis.requestInfo(c).data as {
+        email: string;
+    };
     try {
         const user = $app.dao().findAuthRecordByEmail('users', email);
         if (user.verified()) {
@@ -43,13 +45,11 @@ routerAdd('POST', '/api/v2/users/request-verify-email', (c) => {
 });
 
 routerAdd('POST', '/api/v2/users/register', (c) => {
-    const data = $apis.requestInfo(c).data;
+    const data = $apis.requestInfo(c).data as User;
     const user = new Record($app.dao().findCollectionByNameOrId('users'));
     const form = new RecordUpsertForm($app, user);
-    form.loadData({
-        ...data,
-        activated: data['subscription'] === 'FREE',
-    });
+    data.activated = data.subscription === 'FREE';
+    form.loadData(data);
     form.submit();
     try {
         return c.json(201, {
@@ -76,7 +76,10 @@ routerAdd(
     'POST',
     '/api/v2/users/verify-email',
     (c) => {
-        const { email, code } = $apis.requestInfo(c).data;
+        const { email, code } = $apis.requestInfo(c).data as {
+            email: string;
+            code: string;
+        };
         let verified = false;
         try {
             const user = $app.dao().findAuthRecordByEmail('users', email);
@@ -139,7 +142,10 @@ routerAdd(
     '/api/v2/users/authenticate',
     (c) => {
         try {
-            const { email, password } = $apis.requestInfo(c).data;
+            const { email, password } = $apis.requestInfo(c).data as {
+                email: string;
+                password: string;
+            };
             const user = $app.dao().findAuthRecordByEmail('users', email);
             if (user.validatePassword(password)) {
                 return c.json(200, {

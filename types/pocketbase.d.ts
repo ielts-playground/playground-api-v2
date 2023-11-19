@@ -1,5 +1,23 @@
 // @ts-nocheck
 
+// -------------------------------------------------------------------
+// v2 types
+// -------------------------------------------------------------------
+
+/**
+ * A record in the `users` collection.
+ *
+ * @group v2
+ */
+type User = {
+  username: string,
+  email: string,
+  fullName: string,
+  phoneNumber: string,
+  subscription: 'FREE' | 'PREMIUM',
+  activated: boolean,
+}
+
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // -------------------------------------------------------------------
