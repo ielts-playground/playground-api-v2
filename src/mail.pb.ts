@@ -7,7 +7,7 @@ interface SendMailRequest {
     data: any;
 }
 
-routerAdd('POST', '/api/v2/mail/send', (c) => {
+routerAdd('POST', '/api/v2/internal/mail/send', (c) => {
     const { email, subject, template, data } = $apis.requestInfo(c)
         .data as SendMailRequest;
     const senderAddress = $app.settings().meta.senderAddress;

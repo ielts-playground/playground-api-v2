@@ -22,7 +22,7 @@ routerAdd('POST', '/api/v2/users/request-verify-email', (c) => {
         );
         $http.send({
             method: 'POST',
-            url: 'http://localhost:8090/api/v2/mail/send', // internal call
+            url: 'http://localhost:8090/api/v2/internal/mail/send',
             body: JSON.stringify({
                 email: email,
                 subject: 'Verify your email',
@@ -72,96 +72,86 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
     }
 });
 
-routerAdd(
-    'POST',
-    '/api/v2/users/verify-email',
-    (c) => {
-        const { email, code } = $apis.requestInfo(c).data as {
+routerAdd('POST', '/api/v2/users/verify-email', (c) => {
+    const { email, code } = $apis.requestInfo(c).data as {
+        email: string;
+        code: string;
+    };
+    let verified = false;
+    try {
+        const user = $app.dao().findAuthRecordByEmail('users', email);
+        if (user.verified()) {
+            return c.json(400, {
+                code: 'email_already_verified',
+                message: 'Email has been already verified.',
+            });
+        }
+        const record = new Record();
+        $app.dao()
+            .recordQuery('codes')
+            .andWhere(
+                $dbx.hashExp({
+                    email,
+                    code,
+                    type: 'VERIFY_EMAIL',
+                }),
+            )
+            .orderBy('created DESC')
+            .one(record);
+        const expiration = record.created.time().unix() + 5 * 60; // after 5 minutes
+        const now = new DateTime().time().unix();
+        if (expiration < now) throw new Error();
+        user.setVerified(true);
+        $app.dao().saveRecord(user);
+        verified = true;
+        return c.json(200, {
+            code: 'succeeded',
+            message: 'Verified successfully.',
+            data: {
+                user,
+                token: $tokens.recordAuthToken($app, user),
+            },
+        });
+    } catch {
+        return c.json(400, {
+            code: 'verification_failed',
+            message: 'Provided email or code is invalid.',
+        });
+    } finally {
+        if (verified) {
+            $http.send({
+                method: 'POST',
+                url: 'http://localhost:8090/api/v2/internal/mail/send',
+                body: JSON.stringify({
+                    email,
+                    template: 'verify-email-successfully',
+                    subject: 'Your have verified your email',
+                }),
+            });
+        }
+    }
+});
+
+routerAdd('POST', '/api/v2/users/authenticate', (c) => {
+    try {
+        const { email, password } = $apis.requestInfo(c).data as {
             email: string;
-            code: string;
+            password: string;
         };
-        let verified = false;
-        try {
-            const user = $app.dao().findAuthRecordByEmail('users', email);
-            if (user.verified()) {
-                return c.json(400, {
-                    code: 'email_already_verified',
-                    message: 'Email has been already verified.',
-                });
-            }
-            const record = new Record();
-            $app.dao()
-                .recordQuery('codes')
-                .andWhere(
-                    $dbx.hashExp({
-                        email,
-                        code,
-                        type: 'VERIFY_EMAIL',
-                    }),
-                )
-                .orderBy('created DESC')
-                .one(record);
-            const expiration = record.created.time().unix() + 5 * 60; // after 5 minutes
-            const now = new DateTime().time().unix();
-            if (expiration < now) throw new Error();
-            user.setVerified(true);
-            $app.dao().saveRecord(user);
-            verified = true;
+        const user = $app.dao().findAuthRecordByEmail('users', email);
+        if (user.validatePassword(password)) {
             return c.json(200, {
                 code: 'succeeded',
-                message: 'Verified successfully.',
+                message: 'Authenticated successfully.',
                 data: {
                     user,
                     token: $tokens.recordAuthToken($app, user),
                 },
             });
-        } catch {
-            return c.json(400, {
-                code: 'verification_failed',
-                message: 'Provided email or code is invalid.',
-            });
-        } finally {
-            if (verified) {
-                $http.send({
-                    method: 'POST',
-                    url: 'http://localhost:8090/api/v2/mail/send', // internal call
-                    body: JSON.stringify({
-                        email,
-                        template: 'verify-email-successfully',
-                        subject: 'Your have verified your email',
-                    }),
-                });
-            }
         }
-    },
-    $apis.activityLogger($app),
-);
-
-routerAdd(
-    'POST',
-    '/api/v2/users/authenticate',
-    (c) => {
-        try {
-            const { email, password } = $apis.requestInfo(c).data as {
-                email: string;
-                password: string;
-            };
-            const user = $app.dao().findAuthRecordByEmail('users', email);
-            if (user.validatePassword(password)) {
-                return c.json(200, {
-                    code: 'succeeded',
-                    message: 'Authenticated successfully.',
-                    data: {
-                        user,
-                        token: $tokens.recordAuthToken($app, user),
-                    },
-                });
-            }
-        } catch {}
-        return c.json(401, {
-            code: 'authentication_failed',
-            message: 'Provided email or password is incorrect.',
-        });
-    },
-    $apis.activityLogger($app),
-);
+    } catch {}
+    return c.json(401, {
+        code: 'authentication_failed',
+        message: 'Provided email or password is incorrect.',
+    });
+});

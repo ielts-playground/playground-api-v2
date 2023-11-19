@@ -8,7 +8,7 @@ services:
     environment:
       - EXPORTER_SERVICE=http://exporter:8080
     volumes:
-      - $PB_DATA/data.db:/pb/data.db
+      - pb_data:/pb
     networks:
       - ielts-playground-v2
   exporter:
@@ -17,12 +17,21 @@ services:
       dockerfile: services/exporter/Dockerfile
     image: ielts-playground-api-v2-exporter:1
     container_name: ielts-playground-api-v2-exporter
+    depends_on:
+      - api
     volumes:
-      - $PB_DATA/data.db:/pb/pb_data/data.db
+      - pb_data:/pb/pb_data
+    environment:
+      - EXPORTER_PORT=8080
     expose:
       - 8080
     networks:
       - ielts-playground-v2
+
+volumes:
+  pb_data:
+    name: ielts-playground-v2
+    driver: local
 
 networks:
   ielts-playground-v2:

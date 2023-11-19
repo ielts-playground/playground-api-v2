@@ -4,6 +4,6 @@ RUN apt update && \
     apt clean
 WORKDIR /pb
 COPY package.json bun.lockb ./
-RUN bun install
+RUN bun install --production
 COPY services/exporter/* ./
 ENTRYPOINT bun run index.ts

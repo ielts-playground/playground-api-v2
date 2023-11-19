@@ -2,7 +2,8 @@
   "license": "MIT",
   "version": "0.19.4",
   "scripts": {
-    "format": "prettier --write \"src/**/*.ts\" \"services/**/*.ts\"",
+    "add:hook": "bun run scripts/add-hook",
+    "format": "prettier --write \"src/**/*.ts\" \"services/**/*.ts\" \"views/**/*.html\" \"public/**\"",
     "clean": "rm -rf pb_data/pb_hooks && rm -rf pb_public && rm -rf pb_data/pb_hooks/views",
     "prebuild": "bun run clean",
     "build": "bun build --format esm src/* --outdir pb_data/pb_hooks",
@@ -13,7 +14,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
-    "bun-types": "^1.0.12",
     "prettier": "^3.1.0"
   }
 }

@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/bun-types/types.d.ts" />
+/// <reference path="../../types/bun.d.ts" />
 
 /**
  * Executes a read-only query to the `pb_data/data.db` database.
@@ -24,7 +24,7 @@ function exportAsCsv(query: string) {
 }
 
 Bun.serve({
-    port: process.env.PORT || 8080,
+    port: process.env.EXPORTER_PORT || 8080,
     async fetch(request: Request) {
         const { query } = await request.json();
         const response = new Response(JSON.stringify(exportAsCsv(query)));
