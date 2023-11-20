@@ -3,6 +3,8 @@
   "version": "0.19.4",
   "scripts": {
     "add:hook": "bun run scripts/add-hook",
+    "docker:up": "bun run scripts/docker up",
+    "docker:down": "bun run scripts/docker down",
     "format": "prettier --write \"src/**/*.ts\" \"services/**/*.ts\" \"views/**/*.html\" \"public/**\"",
     "clean": "rm -rf pb_data/pb_hooks && rm -rf pb_public && rm -rf pb_data/pb_hooks/views",
     "prebuild": "bun run clean",

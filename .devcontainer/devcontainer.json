@@ -15,11 +15,21 @@
                 "VisualStudioExptTeam.vscodeintellicode"
             ],
             "settings": {
-                "editor.defaultFormatter": "esbenp.prettier-vscode",
-                "[javascript]": {
+                "[typescript]": {
                     "editor.defaultFormatter": "esbenp.prettier-vscode"
-                }
+                },
+                "editor.defaultFormatter": "esbenp.prettier-vscode"
             }
         }
-    }
+    },
+    "features": {
+        "docker-in-docker": {
+            "dockerDashComposeVersion": "v1",
+            "moby": true,
+            "version": "latest"
+        }
+    },
+    "runArgs": [
+        "--init"
+    ]
 }
