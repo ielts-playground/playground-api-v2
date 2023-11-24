@@ -1,7 +1,5 @@
 /// <reference path="../types/pocketbase.d.ts" />
 
-/// <reference path="../types/pocketbase.d.ts" />
-
 migrate((db) => {
     const dao = new Dao(db);
     const collection = dao.findCollectionByNameOrId('_pb_users_auth_');

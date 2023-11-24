@@ -7,6 +7,7 @@ services:
       - 8090:8090
     environment:
       - EXPORTER_SERVICE=http://exporter:8080
+      - SWAGGER_SERVICE=http://swagger:8090
     volumes:
       - pb_data:/pb
     networks:
@@ -25,6 +26,21 @@ services:
       - EXPORTER_PORT=8080
     expose:
       - 8080
+    networks:
+      - ielts-playground-v2
+  swagger:
+    build:
+      context: ..
+      dockerfile: services/swagger/Dockerfile
+    image: ielts-playground-api-v2-swagger:1
+    container_name: ielts-playground-api-v2-swagger
+    depends_on:
+      - api
+    environment:
+      - PB_SERVICE=http://api:8090
+      - SWAGGER_PORT=8090
+    expose:
+      - 8090
     networks:
       - ielts-playground-v2
 
