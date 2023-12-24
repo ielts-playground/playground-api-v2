@@ -9,7 +9,7 @@ routerAdd('POST', '/api/v2/admin/export-csv', (c) => {
         }).raw,
     );
     if (!success) {
-        return c.json(400, {
+        return c.json(500, {
             code: 'export_operation_failed',
             message: 'Export operation failed.',
             detail: output,

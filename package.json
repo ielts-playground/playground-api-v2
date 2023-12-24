@@ -3,6 +3,7 @@
   "version": "0.19.4",
   "scripts": {
     "help": "bun run scripts/help",
+    "v1:fetch": "bun run scripts/v1 fetch",
     "add:migration": "bun run scripts/add migration",
     "add:hook": "bun run scripts/add hook",
     "docker:up": "bun run scripts/docker up",

@@ -1,0 +1,10 @@
+{{+request
+    request.headers['Content-Type'] = 'application/json';
+}}
+
+### retrieve random listening test
+# @import ./users.http
+# @ref authenticate
+GET /api/v1/random/listening
+    ?id=
+Authorization: Bearer {{authenticate.data.token}}

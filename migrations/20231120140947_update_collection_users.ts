@@ -54,5 +54,12 @@ migrate((db) => {
         }),
     );
 
+    collection.schema.addField(
+        new SchemaField({
+            name: 'v1',
+            type: 'json',
+        }),
+    );
+
     return dao.saveCollection(collection);
 });

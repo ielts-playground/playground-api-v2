@@ -1,6 +1,22 @@
 // @ts-nocheck
 
 // -------------------------------------------------------------------
+// v1 types
+// -------------------------------------------------------------------
+
+/**
+ * @group v1
+ */
+type VerOneRequest = {
+  baseUrl: string,
+  headers: {
+    'X-Api-Key': string,
+    'X-Forwarded-For-User': string,
+    [key: string]: string,
+  },
+}
+
+// -------------------------------------------------------------------
 // v2 types
 // -------------------------------------------------------------------
 
@@ -11,6 +27,7 @@
  */
 type User = {
   username: string,
+  password?: string,
   email: string,
   fullName: string,
   phoneNumber: string,

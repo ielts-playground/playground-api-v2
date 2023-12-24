@@ -4,7 +4,7 @@
 
 ### register
 # @name register
-POST /users/register
+POST /api/v2/users/register
 {
     "email": "hello@tuanm.dev",
     "password": "12345678",
@@ -16,14 +16,14 @@ POST /users/register
 
 ### request email verification
 # @name requestVerifyEmail
-POST /users/request-verify-email
+POST /api/v2/users/request-verify-email
 {
     "email": "hello@tuanm.dev"
 }
 
 ### verify email
 # @name verifyEmail
-POST /users/verify-email
+POST /api/v2/users/verify-email
 {
     "email": "hello@tuanm.dev",
     "code": "548237"
@@ -31,7 +31,7 @@ POST /users/verify-email
 
 ### authenticate
 # @name authenticate
-POST /users/authenticate
+POST /api/v2/users/authenticate
 {
     "email": "hello@tuanm.dev",
     "password": "12345678"

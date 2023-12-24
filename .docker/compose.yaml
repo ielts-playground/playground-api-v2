@@ -3,23 +3,27 @@ services:
     build: ..
     image: ielts-playground-api-v2:0.19.4
     container_name: ielts-playground-api-v2
+    restart: always
     ports:
       - 8090:8090
     environment:
       - EXPORTER_SERVICE=http://exporter:8080
       - SWAGGER_SERVICE=http://swagger:8090
+      - V1_SERVICE=http://v1:8080
+    env_file:
+      - v2.env
     volumes:
       - pb_data:/pb
     networks:
       - ielts-playground-v2
+    depends_on:
+      - v1
   exporter:
     build:
       context: ..
       dockerfile: services/exporter/Dockerfile
     image: ielts-playground-api-v2-exporter:1
     container_name: ielts-playground-api-v2-exporter
-    depends_on:
-      - api
     volumes:
       - pb_data:/pb/pb_data
     environment:
@@ -28,14 +32,14 @@ services:
       - 8080
     networks:
       - ielts-playground-v2
+    depends_on:
+      - api
   swagger:
     build:
       context: ..
       dockerfile: services/swagger/Dockerfile
     image: ielts-playground-api-v2-swagger:1
     container_name: ielts-playground-api-v2-swagger
-    depends_on:
-      - api
     environment:
       - PB_SERVICE=http://api:8090
       - SWAGGER_PORT=8090
@@ -43,14 +47,75 @@ services:
       - 8090
     networks:
       - ielts-playground-v2
+    depends_on:
+      - api
+  v1:
+    build:
+      context: ../v1
+      dockerfile: Dockerfile
+    image: ielts-playground-api-v1
+    container_name: ielts-playground-api-v1
+    restart: always
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - V2_SERVICE=http://api:8090
+      - SPRING_PROFILES_ACTIVE=prod
+      - SWAGGER_BASE_URL=${SWAGGER_BASE_URL:-http://localhost:8080}
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-playground}
+      - MYSQL_USERNAME=${MYSQL_USERNAME:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-123}
+      - JWT_VALIDITY_IN_SECONDS=86400
+    env_file:
+      - v1.env
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    networks:
+      - ielts-playground-v1
+      - ielts-playground-v2
+    depends_on:
+      - mysql
+      - redis
+  mysql:
+    image: mysql:8.0.30
+    container_name: ielts-playground-api-v1-mysql
+    restart: always
+    volumes:
+      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - v1_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-123}
+    expose:
+      - 3306
+    networks:
+      - ielts-playground-v1
+  redis:
+    image: redis:7.0.10-alpine
+    container_name: ielts-playground-api-v1-redis
+    restart: always
+    expose:
+      - 6379
+    networks:
+      - ielts-playground-v1
 
 volumes:
   pb_data:
     name: ielts-playground-v2
     driver: local
+  v1_data:
+    name: ielts-playground-v1
+    driver: local
 
 networks:
   ielts-playground-v2:
     name: ielts-playground-v2
+    driver: bridge
+  ielts-playground-v1:
+    name: ielts-playground-v1
     driver: bridge
 

@@ -51,16 +51,37 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
     data.activated = data.subscription === 'FREE';
     form.loadData(data);
     form.submit();
+    const saved = $app.dao().findAuthRecordByEmail('users', form.email);
+    let succeeded = false;
     try {
+        const { statusCode, json } = $http.send({
+            method: 'POST',
+            url: 'http://localhost:8090/api/v1/internal/register', // internal call
+            body: JSON.stringify({
+                ...data,
+                username: saved.username(),
+            }),
+        });
+        if (statusCode >= 400) {
+            return c.json(500, {
+                code: 'v1_registration_failed',
+                message: 'Something went wrong.',
+                data: {
+                    v1: json,
+                },
+            });
+        }
+        succeeded = true;
         return c.json(201, {
             code: 'succeeded',
             message: 'Registered successfully.',
             data: {
                 email: form.email,
+                v1: json,
             },
         });
     } finally {
-        if (form.email) {
+        if (succeeded) {
             $http.send({
                 method: 'POST',
                 url: 'http://localhost:8090/api/v2/users/request-verify-email', // internal call
@@ -68,6 +89,8 @@ routerAdd('POST', '/api/v2/users/register', (c) => {
                     email: form.email,
                 }),
             });
+        } else {
+            $app.dao().deleteRecord(saved);
         }
     }
 });
@@ -101,6 +124,23 @@ routerAdd('POST', '/api/v2/users/verify-email', (c) => {
         const expiration = record.created.time().unix() + 5 * 60; // after 5 minutes
         const now = new DateTime().time().unix();
         if (expiration < now) throw new Error();
+        const { statusCode, json } = $http.send({
+            method: 'POST',
+            url: 'http://localhost:8090/api/v1/internal/update-user', // internal call
+            body: JSON.stringify({
+                username: user.username(),
+                activated: true,
+            }),
+        });
+        if (statusCode >= 400) {
+            return c.json(500, {
+                code: 'v1_activation_failed',
+                message: 'Something went wrong.',
+                data: {
+                    v1: json,
+                },
+            });
+        }
         user.setVerified(true);
         $app.dao().saveRecord(user);
         verified = true;
@@ -110,6 +150,7 @@ routerAdd('POST', '/api/v2/users/verify-email', (c) => {
             data: {
                 user,
                 token: $tokens.recordAuthToken($app, user),
+                v1: json,
             },
         });
     } catch {
