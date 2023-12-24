@@ -1,11 +1,22 @@
 services:
+  nginx:
+    image: nginx
+    container_name: ielts-playground-api-nginx
+    restart: always
+    command: ['nginx', '-g', 'daemon off;']
+    ports:
+      - ${HTTP_PORT:-80}:80
+      - ${HTTPS_PORT:-443}:443
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - ielts-playground-v1
+      - ielts-playground-v2
   api:
     build: ..
     image: ielts-playground-api-v2:0.19.4
     container_name: ielts-playground-api-v2
     restart: always
-    ports:
-      - 8090:8090
     environment:
       - EXPORTER_SERVICE=http://exporter:8080
       - SWAGGER_SERVICE=http://swagger:8090
@@ -14,6 +25,8 @@ services:
       - v2.env
     volumes:
       - pb_data:/pb
+    expose:
+      - 8090
     networks:
       - ielts-playground-v2
     depends_on:
@@ -70,8 +83,6 @@ services:
       - JWT_VALIDITY_IN_SECONDS=86400
     env_file:
       - v1.env
-    ports:
-      - 8080:8080
     expose:
       - 8080
     networks:
