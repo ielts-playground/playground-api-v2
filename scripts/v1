@@ -1,5 +1,0 @@
-#!/bin/sh
-
-if [ "$1" = "fetch" ]; then
-    cd v1 && git add . && git reset --hard && git pull --rebase && cd ..
-fi

@@ -3,11 +3,11 @@
   "version": "0.19.4",
   "scripts": {
     "help": "bun run scripts/help",
-    "v1:fetch": "bun run scripts/v1 fetch",
     "add:migration": "bun run scripts/add migration",
     "add:hook": "bun run scripts/add hook",
     "docker:up": "bun run scripts/docker up",
     "docker:down": "bun run scripts/docker down",
+    "docker:restart": "bun run docker:down reset && bun run docker:up",
     "format:migrations": "prettier --write \"migrations/**/*.ts\"",
     "format:hooks": "prettier --write \"src/**/*.ts\"",
     "format:views": "prettier --write \"views/**/*.html\"",

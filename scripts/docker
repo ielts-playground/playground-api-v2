@@ -1,16 +1,32 @@
-#!/bin/sh
+#!/bin/bash
 
-if [ -z "$1" ]; then
-    echo "Error: action missing."
-    exit 1
-elif [ "$1" = "up" ]; then
-    [ "$2" = "reset" ] && docker volume rm "ielts-playground-v2" > /dev/null || test true
-    [ "$2" = "reset" ] && docker volume rm "ielts-playground-v1" > /dev/null || test true
+[ -z "$1" ] && echo "Error: action missing." && exit 1
+
+DOCKER_CLI_PLUGINS=$HOME/.docker/cli-plugins
+DOCKER_COMPOSE_VERSION="2.23.3"
+
+install_compose_plugin() {
+    mkdir -p ${DOCKER_CLI_PLUGINS} && \
+        curl -SL https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64 -o ${DOCKER_CLI_PLUGINS}/docker-compose && \
+        chmod +x ${DOCKER_CLI_PLUGINS}/docker-compose
+}
+
+docker compose version 2> /dev/null || (install_compose_plugin && docker compose version)
+
+remove_volumes() {
+    declare -a volumes=("ielts-playground-v1" "ielts-playground-v2")
+    for volume in ${volumes[@]}; do
+        docker volume rm $volume &> /dev/null && \
+            echo -e " ✔ Volume \"$volume\"\tRemoved" || test true
+    done
+}
+
+if [ "$1" = "up" ]; then
+    [ "$2" = "reset" ] && remove_volumes
     docker compose --project-directory .docker up -d --build
 elif [ "$1" = "down" ]; then
     docker compose --project-directory .docker down
-    [ "$2" = "reset" ] && docker volume rm "ielts-playground-v2" > /dev/null || test true
-    [ "$2" = "reset" ] && docker volume rm "ielts-playground-v1" > /dev/null || test true
+    [ "$2" = "reset" ] && remove_volumes
 else
     echo "Error: action invalid."
     exit 1
