@@ -11,7 +11,12 @@ routerAdd(
             url: `${v1?.baseUrl}/test/random?skill=${skill}&id=${id}`,
             headers: v1?.headers,
         });
-        return c.json(statusCode, json);
+        const succeeded = statusCode < 400;
+        return c.json(statusCode, {
+            code: succeeded ? 'succeeded' : 'v1_exam_retrieval_failed',
+            message: succeeded ? 'Successfully.' : 'Something went wrong.',
+            data: json,
+        });
     },
     $apis.requireRecordAuth(),
 );
@@ -31,7 +36,12 @@ routerAdd(
                 submitId,
             }),
         });
-        return c.json(statusCode, json);
+        const succeeded = statusCode < 400;
+        return c.json(statusCode, {
+            code: succeeded ? 'succeeded' : 'v1_exam_submission_failed',
+            message: succeeded ? 'Successfully.' : 'Something went wrong.',
+            data: json,
+        });
     },
     $apis.requireRecordAuth(),
 );

@@ -70,8 +70,10 @@ services:
     container_name: ielts-playground-api-v1
     restart: always
     environment:
+      - SPRING_CACHE_TYPE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=123
       - V2_SERVICE=http://api:8090
       - SPRING_PROFILES_ACTIVE=prod
       - SWAGGER_BASE_URL=${SWAGGER_BASE_URL:-http://localhost:8080}
@@ -109,6 +111,7 @@ services:
     image: redis:7.0.10-alpine
     container_name: ielts-playground-api-v1-redis
     restart: always
+    command: ['redis-server', '--bind', 'redis', '--port', '6379', '--requirepass', '123']
     expose:
       - 6379
     networks:
