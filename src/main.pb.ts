@@ -57,11 +57,10 @@ function verOneRequestMiddleware(next: echo.HandlerFunc): echo.HandlerFunc {
             const isNotFromThisHost = !/^127\.0\.0\.1(:\d+)?$/.test(
                 request.remoteAddr,
             );
-            const userUnauthorized = !user && !isInternalRequest;
             const internalUnauthorized = isInternalRequest && isNotFromThisHost;
-            if (userUnauthorized || internalUnauthorized) {
+            if (internalUnauthorized) {
                 throw new UnauthorizedError(
-                    'Only authorized users can access this resource.',
+                    'This resource can be accessed only from internal services.',
                 );
             }
             c.set('v1', {

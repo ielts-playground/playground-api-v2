@@ -21,6 +21,16 @@ routerAdd(
     $apis.requireRecordAuth(),
 );
 
+routerAdd('GET', '/api/v1/test/:id/audio', (c) => {
+    const id = c.pathParam('id');
+    const v1 = c.get('v1') as VerOneRequest;
+    const { statusCode, headers, raw } = $http.send({
+        url: `${v1?.baseUrl}/test/${id}/audio`,
+        headers: v1?.headers,
+    });
+    return c.blob(statusCode, headers['Content-Type'].join(';'), raw);
+});
+
 routerAdd(
     'PUT',
     '/api/v1/exam/:submitId/submit',

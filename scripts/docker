@@ -21,9 +21,14 @@ remove_volumes() {
     done
 }
 
+restart_nginx() {
+    docker restart ielts-playground-api-nginx &> /dev/null
+}
+
 if [ "$1" = "up" ]; then
     [ "$2" = "reset" ] && remove_volumes
     docker compose --project-directory .docker up -d --build
+    restart_nginx
 elif [ "$1" = "down" ]; then
     docker compose --project-directory .docker down
     [ "$2" = "reset" ] && remove_volumes
@@ -31,3 +36,5 @@ else
     echo "Error: action invalid."
     exit 1
 fi
+
+test true
