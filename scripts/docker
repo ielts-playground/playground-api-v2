@@ -1,6 +1,23 @@
 #!/bin/bash
 
-[ -z "$1" ] && echo "Error: action missing." && exit 1
+[ -z "$1" ] && echo "Error: Action missing." && exit 1
+
+if [ ! -z "$2" ]; then
+    export DATA=$2
+else
+    export DATA=/tmp/ielts-playground
+    echo "Warn: DATA not specified."
+fi
+
+echo "Info: DATA=$DATA."
+mkdir -p $DATA/v1
+mkdir -p $DATA/v2
+
+if [ ! -f "$DATA/v2/data.db" ]; then
+    echo "Warn: No data.db found."
+    cp .docker/data.db.dump $DATA/v2/data.db
+    echo "Info: Initial data.db created."
+fi
 
 DOCKER_CLI_PLUGINS=$HOME/.docker/cli-plugins
 DOCKER_COMPOSE_VERSION="2.23.3"
@@ -13,25 +30,15 @@ install_compose_plugin() {
 
 docker compose version 2> /dev/null || (install_compose_plugin && docker compose version)
 
-remove_volumes() {
-    declare -a volumes=("ielts-playground-v1" "ielts-playground-v2")
-    for volume in ${volumes[@]}; do
-        docker volume rm $volume &> /dev/null && \
-            echo -e " ✔ Volume \"$volume\"\tRemoved" || test true
-    done
-}
-
 restart_nginx() {
     docker restart ielts-playground-api-nginx &> /dev/null
 }
 
 if [ "$1" = "up" ]; then
-    [ "$2" = "reset" ] && remove_volumes
     docker compose --project-directory .docker up -d --build
     restart_nginx
 elif [ "$1" = "down" ]; then
     docker compose --project-directory .docker down
-    [ "$2" = "reset" ] && remove_volumes
 else
     echo "Error: action invalid."
     exit 1

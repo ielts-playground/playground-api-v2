@@ -24,7 +24,9 @@ services:
     env_file:
       - v2.env
     volumes:
-      - pb_data:/pb
+      - type: bind
+        source: $DATA/v2/data.db
+        target: /pb/data.db
     expose:
       - 8090
     networks:
@@ -38,7 +40,9 @@ services:
     image: ielts-playground-api-v2-exporter:1
     container_name: ielts-playground-api-v2-exporter
     volumes:
-      - pb_data:/pb/pb_data
+      - type: bind
+        source: $DATA/v2/data.db
+        target: /pb/pb_data/data.db
     environment:
       - EXPORTER_PORT=8080
     expose:
@@ -100,7 +104,7 @@ services:
     volumes:
       - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-      - v1_data:/var/lib/mysql
+      - $DATA/v1:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-123}
     expose:
@@ -116,14 +120,6 @@ services:
       - 6379
     networks:
       - ielts-playground-v1
-
-volumes:
-  pb_data:
-    name: ielts-playground-v2
-    driver: local
-  v1_data:
-    name: ielts-playground-v1
-    driver: local
 
 networks:
   ielts-playground-v2:
