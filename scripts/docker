@@ -4,7 +4,7 @@
 
 if [ ! -z "$2" ]; then
     export DATA=$2
-else
+elif [ -z "$DATA" ]; then
     export DATA=/tmp/ielts-playground
     echo "Warn: DATA not specified."
 fi
